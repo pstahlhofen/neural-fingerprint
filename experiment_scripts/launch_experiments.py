@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 
 from nfpexperiment import util
 
-LAUNCH_USING_SLURM = True
+LAUNCH_USING_SLURM = False
 DEBUG_JOB = False
 
 def make_sbatch_args(outfile):

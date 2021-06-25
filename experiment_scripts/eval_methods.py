@@ -1,3 +1,4 @@
+#!/Users/paulstahlhofen/anaconda3/envs/mlgraphs/bin/python
 import os, sys, subprocess, time, datetime
 from neuralfingerprint import (build_morgan_deep_net,  build_conv_deep_net,
                                normalize_array, adam, build_batched_grad,

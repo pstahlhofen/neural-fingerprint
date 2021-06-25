@@ -32,7 +32,7 @@ else:
 
 if __debug__:
     N_cores = 1
-    N_jobs = 1
+    N_jobs = 2
     num_iters = 1
     num_folds = 3
     #datasets = ['toxin', 'delaney', 'malaria', 'cep']

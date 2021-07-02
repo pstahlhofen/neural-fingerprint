@@ -15,6 +15,8 @@ from autograd import grad
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem.Draw import DrawingOptions
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from neuralfingerprint import load_data, relu
@@ -24,7 +26,7 @@ from neuralfingerprint import build_batched_grad, degrees, build_standard_net
 from neuralfingerprint.util import rmse
 from neuralfingerprint.data_util import remove_duplicates
 
-task_params = {'N_train'     : 800,
+task_params = {'N_train'     : 100,
                'N_valid'     : 150,
                'N_test'      : 170,
                'target_name' : 'measured log solubility in mols per litre',

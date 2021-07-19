@@ -113,3 +113,10 @@ talks/*.mtc1
 talks/*.out
 talks/*.synctex.gz
 talks/*.brf
+
+# local results and instructions for Slurm (Git takes care of archived versions)
+compute-cluster-use-master/
+experiment_scripts/results/
+experiment_scripts/test_results/
+experiment_scripts/results_DEBUG/
+experiment_scripts/test_results_DEBUG/

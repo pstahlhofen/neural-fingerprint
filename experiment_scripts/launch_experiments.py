@@ -18,7 +18,7 @@ def make_sbatch_args(outfile):
             '-n', '1',
             '-N', '1',
             '-t', '10:00:00',
-            '--mem-per-cpu=4000',
+	    '-c', '20'
             '-o', outfile]
 
 experiment_command = sys.argv[1]
@@ -121,10 +121,21 @@ def runjob_sbatch(params_string, outfile):
     infile = infile_obj.name
     logfile = outfile + '_log.txt'
     bash_script = '#!/bin/bash\n{} >{} <{}'.format(experiment_command, outfile, infile)
-    p = subprocess.Popen(make_sbatch_args(logfile), stdin=subprocess.PIPE)
+    p = Popen(make_sbatch_args(logfile), stdin=subprocess.PIPE)
     p.communicate(bash_script)
     if p.returncode != 0:
         raise RuntimeError
+
+def prepare_job_sbatch(params_string, outfile):
+    dir_name, file_name = outfile.split('/')
+    raw_file_name, extension = file_name.split('.')
+    params_dir = 'tmp'
+    params_file_name = '.'.join([raw_file_name, 'params'])
+    params_file = '/'.join([params_dir, params_file_name])
+#    with open(params_file, 'w') as pf:
+#        pf.write(params_string)
+    logfile = outfile + '_log.txt'
+    return ' '.join([params_file, outfile, logfile]) + '\n'
 
 def generate_slice_lists(num_folds, N_data):
     chunk_boundaries = map(int, np.linspace(0, N_data, num_folds + 1))
@@ -144,6 +155,7 @@ if not test_mode:
     print "Starting validation experiments..."
     all_jobs = []
     still_running = lambda job : job.poll() is None
+    lines = []
     for dataset, num_data in zip(datasets, dataset_sizes):
         for fold, (train_slices, validation_slices, test_slices)\
                 in enumerate(generate_slice_lists(num_folds, num_data)):
@@ -160,13 +172,15 @@ if not test_mode:
                     if DEBUG_JOB:
                         runjob_debug(params_string, cur_outfile)
                     elif LAUNCH_USING_SLURM:
-                        runjob_sbatch(params_string, cur_outfile)
+                        lines.append(prepare_job_sbatch(params_string, cur_outfile))
                     else:
                         p = runjob_local(params_string, cur_outfile)
                         all_jobs.append(p)   # Only have a few jobs running at a time.
                         while len(all_jobs) >= N_cores:
                             sleep(1)
                             all_jobs = filter(still_running, all_jobs)
+    with open('params_and_outs.txt', 'w') as params_and_outs:
+        params_and_outs.writelines(lines)
 else:
     print "Starting test experiments..."
     all_jobs = []

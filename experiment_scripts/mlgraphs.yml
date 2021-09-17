@@ -1,4 +1,4 @@
-name: testenv
+name: mlgraphs
 channels:
   - conda-forge
   - defaults

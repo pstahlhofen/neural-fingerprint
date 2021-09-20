@@ -7,6 +7,7 @@ import numpy as np
 import numpy.random as npr
 from time import sleep
 from tempfile import NamedTemporaryFile
+import pandas as pd
 
 from nfpexperiment import util
 
@@ -149,7 +150,33 @@ def generate_slice_lists(num_folds, N_data):
                map(chunk_slices.__getitem__, validation_chunk_ixs),
                map(chunk_slices.__getitem__, test_chunk_ixs))
 
-extract_test_loss = lambda job_data : job_data['test_loss']
+def extract_best_results():
+    loss_file = 'all_losses.csv'
+    loss_data_frame = pd.DataFrame(dict(dataset=[], model=[], loss=[]))
+    for dataset, num_data in zip(datasets, dataset_sizes):
+        for model in model_bounds:
+            all_outfiles = [outputfile(jobnum, dataset, model, fold) for jobnum in range(N_jobs) for fold in range(num_folds)]
+            all_results = util.get_jobs_data(all_outfiles)
+            print "Loaded {} results for fold {} dataset {} model {}"\
+                .format(len(all_results), fold, dataset, model)
+            extract_test_loss = lambda job_data : job_data['test_loss']
+	    not_nan = lambda job_data : not np.isnan(extract_test_loss(job_data))
+	    ok_results = filter(not_nan, all_results)
+            best_run = sorted(ok_results, key=extract_test_loss)[0]
+            best_hypers = best_run['params']
+            best_loss = best_run['test_loss']
+            params_string = json.dumps(best_hypers)
+            params_file = '_'.join(['best_params', dataset, model])
+            with open(params_file, 'w') as pf:
+                pf.write(params_string)
+            loss_data_frame = loss_data_frame.append(
+              dict(dataset=dataset, model=model, loss=best_loss),
+              ignore_index=True
+            )
+    # Re-order columns
+    loss_data_frame = loss_data_frame[['dataset', 'model', 'loss']]
+    loss_data_frame.to_csv(loss_file, index=False)
+
 
 if not test_mode:
     print "Starting validation experiments..."
@@ -179,8 +206,11 @@ if not test_mode:
                         while len(all_jobs) >= N_cores:
                             sleep(1)
                             all_jobs = filter(still_running, all_jobs)
-    with open('params_and_outs.txt', 'w') as params_and_outs:
-        params_and_outs.writelines(lines)
+    if (lines!=[]):
+        with open('params_and_outs.txt', 'w') as params_and_outs:
+            params_and_outs.writelines(lines)
+    else:
+        pass
 else:
     print "Starting test experiments..."
     all_jobs = []
